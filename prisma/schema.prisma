@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  password String // Hashed
+  role     String @default("PIKET") // "ADMIN" or "PIKET"
+}
+
+model Student {
+  id        String      @id @default(cuid())
+  nis       String      @unique 
+  name      String
+  kelas     String
+  jurusan   String?
+  tardies   Tardiness[]
+  
+  @@index([nis, name])
+}
+
+model Tardiness {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
+  reason    String?
+}
