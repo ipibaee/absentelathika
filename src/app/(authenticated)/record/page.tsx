@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useOptimistic, useTransition } from "react"
+import { createPortal } from "react-dom"
 import { Search, User, MapPin, AlertCircle, Sparkles, CheckCircle2, Clock, X } from "lucide-react"
 import { recordTardiness } from "@/actions/tardiness"
 import { toast } from "sonner"
@@ -33,8 +34,11 @@ export default function RecordPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [isPending, startTransition] = useTransition()
 
+    const [isMounted, setIsMounted] = useState(false)
+
     // Fetch master data of students on mount
     useEffect(() => {
+        setIsMounted(true)
         async function fetchStudents() {
             try {
                 const response = await fetch("/api/students")
@@ -260,19 +264,22 @@ export default function RecordPage() {
             </div>
 
             {/* iOS Slide-up Bottom Sheet (Mobile) & Centered Dialog (Desktop) */}
-            {selectedStudent && (
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-50 animate-fade-in flex items-end md:items-center justify-center p-0 md:p-4">
+            {selectedStudent && isMounted && createPortal(
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-[100] animate-fade-in flex items-end md:items-center justify-center p-0 md:p-4">
                     {/* Backdrop Click Close */}
                     <div className="absolute inset-0" onClick={() => setSelectedStudent(null)} />
 
                     {/* Modal Container */}
-                    <div className="relative w-full md:max-w-lg bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border-t md:border border-white/20 dark:border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl p-6 pb-10 md:pb-6 z-10 animate-slide-up md:animate-scale-up flex flex-col gap-4 max-h-[90vh] md:max-h-none overflow-y-auto">
+                    <form 
+                        onSubmit={handleSubmit}
+                        className="relative w-full md:max-w-lg bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border-t md:border border-slate-200/50 dark:border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl p-5 md:p-6 z-10 animate-slide-up md:animate-scale-up flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden"
+                    >
                         
                         {/* Drawer Drag bar for Mobile view */}
                         <div className="md:hidden w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-2 shrink-0" />
 
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between shrink-0 mb-3">
                             <div>
                                 <span className="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-widest block">
                                     Catat Keterlambatan
@@ -282,38 +289,39 @@ export default function RecordPage() {
                                 </h3>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setSelectedStudent(null)}
-                                className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition cursor-pointer"
+                                className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition cursor-pointer border-none outline-none"
                             >
                                 <X className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
 
-                        {/* Student Details Card */}
-                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-xs flex flex-col gap-2 font-medium text-slate-600 dark:text-slate-300">
-                            <div className="flex justify-between">
-                                <span className="opacity-70">NIS Siswa</span>
-                                <span className="font-bold text-slate-900 dark:text-slate-100">{selectedStudent.nis}</span>
+                        {/* Scrollable Intermediate Body */}
+                        <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 scrollbar-thin">
+                            {/* Student Details Card */}
+                            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-xs flex flex-col gap-2 font-medium text-slate-600 dark:text-slate-300 shrink-0">
+                                <div className="flex justify-between">
+                                    <span className="opacity-70">NIS Siswa</span>
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">{selectedStudent.nis}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="opacity-70">Kelas</span>
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">{selectedStudent.kelas}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="opacity-70">Riwayat Terlambat</span>
+                                    <span className={cn(
+                                        "font-bold px-2 py-0.5 rounded-md",
+                                        selectedStudent.tardiesCount > 0 ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-green-500/10 text-green-600 dark:text-green-400"
+                                    )}>
+                                        {selectedStudent.tardiesCount} Kali
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="opacity-70">Kelas</span>
-                                <span className="font-bold text-slate-900 dark:text-slate-100">{selectedStudent.kelas}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="opacity-70">Riwayat Terlambat</span>
-                                <span className={cn(
-                                    "font-bold px-2 py-0.5 rounded-md",
-                                    selectedStudent.tardiesCount > 0 ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-green-500/10 text-green-600 dark:text-green-400"
-                                )}>
-                                    {selectedStudent.tardiesCount} Kali
-                                </span>
-                            </div>
-                        </div>
 
-                        {/* Tardiness Form */}
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
                             {/* Alasan Input */}
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-1.5 shrink-0">
                                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Alasan Terlambat
                                 </label>
@@ -322,23 +330,24 @@ export default function RecordPage() {
                                     placeholder="Tulis alasan terlambat (opsional)..."
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
-                                    className="w-full h-12 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 focus:border-blue-500/50 dark:focus:border-blue-500/50 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all rounded-2xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm font-medium"
+                                    className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 focus:border-blue-500/50 dark:focus:border-blue-500/50 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm font-medium"
                                 />
                             </div>
 
                             {/* Quick Select Reason Tags */}
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-1.5 shrink-0">
                                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                     Pilih Cepat Alasan
                                 </span>
-                                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1">
+                                {/* Swipeable row on mobile, wrapping on desktop */}
+                                <div className="flex overflow-x-auto md:flex-wrap gap-2 pb-2 md:pb-0 scrollbar-none pr-1 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                     {COMMON_REASONS.map((tag) => (
                                         <button
                                             key={tag}
                                             type="button"
                                             onClick={() => setReason(tag)}
                                             className={cn(
-                                                "px-3 py-2 rounded-xl text-xs font-semibold border transition active:scale-95 cursor-pointer",
+                                                "px-3 py-2 rounded-xl text-xs font-semibold border transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0",
                                                 reason === tag
                                                     ? "bg-blue-600 border-blue-600 text-white shadow-sm"
                                                     : "bg-slate-100/70 border-slate-200/50 text-slate-600 dark:bg-white/5 dark:border-white/5 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-white/8"
@@ -349,27 +358,28 @@ export default function RecordPage() {
                                     ))}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Form submit button */}
-                            <div className="flex gap-3 mt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedStudent(null)}
-                                    className="flex-1 h-12 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold rounded-2xl transition active:scale-98 cursor-pointer"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-2 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/10 active:scale-98 transition cursor-pointer flex items-center justify-center gap-2"
-                                >
-                                    <Clock className="h-4.5 w-4.5" />
-                                    <span>Simpan Rekap</span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                        {/* Sticky Footer (outside scrollable area) */}
+                        <div className="flex gap-3 pt-4 mt-3 border-t border-slate-200/50 dark:border-white/5 shrink-0 bg-transparent">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedStudent(null)}
+                                className="flex-1 h-11 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold rounded-2xl transition active:scale-98 cursor-pointer border-none outline-none"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                className="flex-2 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/10 active:scale-98 transition cursor-pointer flex items-center justify-center gap-2 border-none outline-none"
+                            >
+                                <Clock className="h-4.5 w-4.5" />
+                                <span>Simpan Rekap</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>,
+                document.body
             )}
         </div>
     )
