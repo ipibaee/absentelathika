@@ -39,7 +39,12 @@ export default async function RecordPage() {
                 jurusan: true,
                 tardies: {
                     select: {
-                        id: true
+                        id: true,
+                        date: true,
+                        reason: true
+                    },
+                    orderBy: {
+                        date: 'desc'
                     }
                 }
             },
@@ -80,6 +85,7 @@ export default async function RecordPage() {
         name: s.name,
         kelas: s.kelas,
         jurusan: s.jurusan || "",
+        tardies: s.tardies,
         tardiesCount: s.tardies.length
     }))
 

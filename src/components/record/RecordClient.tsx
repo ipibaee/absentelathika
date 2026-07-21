@@ -9,12 +9,19 @@ import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav"
 
+interface TardinessRecord {
+    id: string
+    date: Date
+    reason: string | null
+}
+
 interface Student {
     id: string
     nis: string
     name: string
     kelas: string
     jurusan: string
+    tardies: TardinessRecord[]
     tardiesCount: number
 }
 
@@ -106,7 +113,16 @@ export function RecordClient({ initialStudents, stats: initialStats, currentUser
                 setAllStudents(prev => 
                     prev.map(s => {
                         if (s.id === studentToRecord.id) {
-                            return { ...s, tardiesCount: s.tardiesCount + 1 }
+                            const newRecord = {
+                                id: result.tardiness!.id,
+                                date: new Date(result.tardiness!.date),
+                                reason: result.tardiness!.reason
+                            }
+                            return { 
+                                ...s, 
+                                tardiesCount: s.tardiesCount + 1,
+                                tardies: [newRecord, ...s.tardies]
+                            }
                         }
                         return s
                     })
@@ -346,6 +362,55 @@ export function RecordClient({ initialStudents, stats: initialStats, currentUser
                                                 {selectedStudent.tardiesCount} Kali
                                             </span>
                                         </div>
+                                    </div>
+
+                                    {/* Timeline History Section */}
+                                    <div className="flex flex-col gap-2 shrink-0">
+                                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                            Riwayat Keterlambatan Sebelumnya
+                                        </span>
+                                        {selectedStudent.tardies.length === 0 ? (
+                                            <div className="p-4 rounded-2xl bg-green-500/5 border border-green-500/10 text-center flex flex-col items-center justify-center gap-1">
+                                                <CheckCircle2 className="h-5 w-5 text-green-500 animate-pulse" />
+                                                <h5 className="font-bold text-green-850 dark:text-green-300 text-[10px]">Belum Pernah Terlambat</h5>
+                                                <p className="text-[9px] text-green-650 dark:text-green-400">Siswa ini tidak memiliki riwayat terlambat sebelumnya.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col gap-3 max-h-[140px] overflow-y-auto pr-1 border border-slate-200/50 dark:border-white/5 p-3 rounded-2xl bg-slate-100/30 dark:bg-black/10">
+                                                {selectedStudent.tardies.map((record, index) => {
+                                                    const dateObj = new Date(record.date)
+                                                    const formattedDate = dateObj.toLocaleDateString("id-ID", {
+                                                        weekday: "short",
+                                                        day: "numeric",
+                                                        month: "short",
+                                                        year: "numeric"
+                                                    })
+                                                    const formattedTime = dateObj.toLocaleTimeString("id-ID", {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit"
+                                                    })
+                                                    return (
+                                                        <div key={record.id} className="flex gap-3 items-start relative pl-1 text-[11px]">
+                                                            <div className="flex flex-col items-center shrink-0 mt-1">
+                                                                <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 ring-2 ring-blue-500/10" />
+                                                                {index < selectedStudent.tardies.length - 1 && (
+                                                                    <div className="w-[1px] h-8 bg-slate-200 dark:bg-white/10 mt-1" />
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center justify-between font-bold text-slate-800 dark:text-slate-200">
+                                                                    <span>{formattedDate}</span>
+                                                                    <span className="text-[9px] text-slate-400 font-semibold">{formattedTime} WIB</span>
+                                                                </div>
+                                                                <p className="text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                    Alasan: <span className="font-semibold text-slate-700 dark:text-slate-300">{record.reason || "Tanpa alasan"}</span>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Alasan Input */}
