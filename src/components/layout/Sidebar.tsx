@@ -9,7 +9,8 @@ import {
     UserCheck, 
     LogOut,
     User,
-    School
+    School,
+    Lock
 } from "lucide-react"
 
 export function Sidebar({ user }: { user: any }) {
@@ -61,29 +62,41 @@ export function Sidebar({ user }: { user: any }) {
                 })}
             </nav>
 
-            {/* User Profile Card & Sign out */}
+            {/* User Profile Card & Sign out / Login Admin */}
             <div className="flex flex-col gap-4 mt-auto">
-                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
-                    <div className="h-9 w-9 rounded-lg bg-blue-600/10 dark:bg-blue-400/10 flex items-center justify-center border border-blue-600/10 dark:border-blue-400/10 shrink-0">
-                        <User className="h-4.5 w-4.5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="min-w-0">
-                        <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate capitalize">
-                            {user?.username}
-                        </h4>
-                        <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 block mt-0.5">
-                            {user?.role === "ADMIN" ? "Administrator" : "Guru Piket"}
-                        </span>
-                    </div>
-                </div>
+                {user ? (
+                    <>
+                        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
+                            <div className="h-9 w-9 rounded-lg bg-blue-600/10 dark:bg-blue-400/10 flex items-center justify-center border border-blue-600/10 dark:border-blue-400/10 shrink-0">
+                                <User className="h-4.5 w-4.5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="min-w-0">
+                                <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate capitalize">
+                                    {user?.username}
+                                </h4>
+                                <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 block mt-0.5">
+                                    {user?.role === "ADMIN" ? "Administrator" : "Guru Piket"}
+                                </span>
+                            </div>
+                        </div>
 
-                <button
-                    onClick={() => logout()}
-                    className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-semibold transition active:scale-98 cursor-pointer outline-none"
-                >
-                    <LogOut className="h-4.5 w-4.5" />
-                    <span>Keluar Aplikasi</span>
-                </button>
+                        <button
+                            onClick={() => logout()}
+                            className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-semibold transition active:scale-98 cursor-pointer outline-none"
+                        >
+                            <LogOut className="h-4.5 w-4.5" />
+                            <span>Keluar Aplikasi</span>
+                        </button>
+                    </>
+                ) : (
+                    <Link
+                        href="/login"
+                        className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition active:scale-98 cursor-pointer outline-none shadow-md shadow-blue-500/10"
+                    >
+                        <Lock className="h-4.5 w-4.5" />
+                        <span>Login Admin</span>
+                    </Link>
+                )}
             </div>
         </aside>
     )

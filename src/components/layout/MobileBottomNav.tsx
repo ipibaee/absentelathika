@@ -12,7 +12,8 @@ import {
     LogOut,
     User,
     X,
-    CalendarDays
+    CalendarDays,
+    Lock
 } from "lucide-react"
 
 export function MobileBottomNav({ user }: { user: any }) {
@@ -65,7 +66,7 @@ export function MobileBottomNav({ user }: { user: any }) {
                 </button>
             </div>
 
-            {/* Slide-up Liquid Glass Drawer for 'Lainnya' */}
+            {/* Slide-up Liquid Drawer for 'Lainnya' */}
             {isMenuOpen && (
                 <div className="md:hidden fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-xs z-50 animate-fade-in flex items-end justify-center">
                     {/* Backdrop Click to Close */}
@@ -80,52 +81,81 @@ export function MobileBottomNav({ user }: { user: any }) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Informasi Pengguna</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">Masuk sebagai {user?.username}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {user ? `Masuk sebagai ${user.username}` : "Sebagai Piket / Tamu"}
+                                </p>
                             </div>
                             <button 
                                 onClick={() => setIsMenuOpen(false)}
-                                className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition cursor-pointer"
+                                className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition cursor-pointer border-none outline-none"
                             >
                                 <X className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
 
                         {/* User Profile Card inside sheet */}
-                        <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
-                            <div className="h-12 w-12 rounded-xl bg-blue-600/10 dark:bg-blue-400/10 flex items-center justify-center border border-blue-600/10 dark:border-blue-400/10">
-                                <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 capitalize">{user?.username}</h4>
-                                <span className="inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-semibold tracking-wide bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-200/30">
-                                    {user?.role === "ADMIN" ? "Administrator" : "Guru Piket"}
-                                </span>
-                            </div>
-                        </div>
+                        {user ? (
+                            <>
+                                <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
+                                    <div className="h-12 w-12 rounded-xl bg-blue-600/10 dark:bg-blue-400/10 flex items-center justify-center border border-blue-600/10 dark:border-blue-400/10">
+                                        <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 capitalize">{user?.username}</h4>
+                                        <span className="inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-semibold tracking-wide bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-200/30">
+                                            {user?.role === "ADMIN" ? "Administrator" : "Guru Piket"}
+                                        </span>
+                                    </div>
+                                </div>
 
-                        {/* Manage Users Option (Admin only) */}
-                        {user?.role === "ADMIN" && (
-                            <Link
-                                href="/dashboard/users"
-                                onClick={() => setIsMenuOpen(false)}
-                                className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/15 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-sm font-semibold transition active:scale-98 cursor-pointer outline-none"
-                            >
-                                <User className="h-4.5 w-4.5" />
-                                <span>Manajemen User</span>
-                            </Link>
+                                {/* Manage Users Option (Admin only) */}
+                                {user?.role === "ADMIN" && (
+                                    <Link
+                                        href="/dashboard/users"
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/15 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-sm font-semibold transition active:scale-98 cursor-pointer outline-none"
+                                    >
+                                        <User className="h-4.5 w-4.5" />
+                                        <span>Manajemen User</span>
+                                    </Link>
+                                )}
+
+                                {/* Logout Option */}
+                                <button
+                                    onClick={() => {
+                                        setIsMenuOpen(false)
+                                        logout()
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 p-3.5 mt-2 rounded-2xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-semibold transition active:scale-98 cursor-pointer outline-none"
+                                >
+                                    <LogOut className="h-4.5 w-4.5" />
+                                    <span>Keluar dari Aplikasi</span>
+                                </button>
+                            </>
+                        ) : (
+                            <div className="flex flex-col gap-4">
+                                <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5">
+                                    <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center border border-slate-200/50 dark:border-white/5 text-slate-500">
+                                        <User className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Piket Harian</h4>
+                                        <span className="inline-block px-2.5 py-0.5 mt-1 rounded-full text-[10px] font-semibold tracking-wide bg-slate-100 dark:bg-white/5 text-slate-500">
+                                            Akses Publik (Mencatat saja)
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <Link
+                                    href="/login"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold transition active:scale-98 cursor-pointer outline-none shadow-md shadow-blue-500/10"
+                                >
+                                    <Lock className="h-4.5 w-4.5" />
+                                    <span>Login Administrator</span>
+                                </Link>
+                            </div>
                         )}
-
-                        {/* Logout Option */}
-                        <button
-                            onClick={() => {
-                                setIsMenuOpen(false)
-                                logout()
-                            }}
-                            className="w-full flex items-center justify-center gap-2 p-3.5 mt-2 rounded-2xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/15 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-semibold transition active:scale-98 cursor-pointer outline-none"
-                        >
-                            <LogOut className="h-4.5 w-4.5" />
-                            <span>Keluar dari Aplikasi</span>
-                        </button>
                     </div>
                 </div>
             )}

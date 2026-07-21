@@ -6,7 +6,7 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 import * as XLSX from "xlsx"
 import { toast } from "sonner"
 import { importStudents, createStudent, updateStudent, deleteStudent } from "@/actions/students"
-import { deleteTardiness } from "@/actions/tardiness"
+import { deleteTardiness, updateTardinessReason } from "@/actions/tardiness"
 import { 
     Users, 
     Clock, 
@@ -67,6 +67,9 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
     useEffect(() => {
         setIsMounted(true)
     }, [])
+
+    const [editingRecordId, setEditingRecordId] = useState<string | null>(null)
+    const [editingRecordReason, setEditingRecordReason] = useState<string>("")
     
     // Form Inputs States
     const [formNis, setFormNis] = useState("")
@@ -167,6 +170,35 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
             toast.success("Berhasil menghapus catatan keterlambatan.")
         } else {
             toast.error(result.error || "Gagal menghapus catatan.")
+        }
+    }
+
+    // Handle saving of updated tardiness reason
+    const handleSaveRecordReason = async (tardinessId: string, studentId: string) => {
+        const result = await updateTardinessReason(tardinessId, editingRecordReason)
+        if (result.success) {
+            setStudents(prev => prev.map(s => {
+                if (s.id === studentId) {
+                    return {
+                        ...s,
+                        tardies: s.tardies.map(t => t.id === tardinessId ? { ...t, reason: editingRecordReason } : t)
+                    }
+                }
+                return s
+            }))
+            setSelectedStudent(prev => {
+                if (prev && prev.id === studentId) {
+                    return {
+                        ...prev,
+                        tardies: prev.tardies.map(t => t.id === tardinessId ? { ...t, reason: editingRecordReason } : t)
+                    }
+                }
+                return prev
+            })
+            setEditingRecordId(null)
+            toast.success("Berhasil memperbarui alasan keterlambatan.")
+        } else {
+            toast.error(result.error || "Gagal memperbarui data.")
         }
     }
 
@@ -597,17 +629,56 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
                                                                 {formattedTime} WIB
                                                             </span>
                                                         </div>
-                                                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                                                            Alasan: <span className="font-semibold text-slate-900 dark:text-slate-200">{record.reason || "Tanpa alasan"}</span>
-                                                        </p>
+                                                        {editingRecordId === record.id ? (
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <input
+                                                                    type="text"
+                                                                    value={editingRecordReason}
+                                                                    onChange={(e) => setEditingRecordReason(e.target.value)}
+                                                                    className="flex-1 h-8 px-2.5 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-lg outline-none focus:ring-1 focus:ring-blue-500/30 text-xs text-slate-800 dark:text-slate-100"
+                                                                    placeholder="Tulis alasan baru..."
+                                                                    autoFocus
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSaveRecordReason(record.id, selectedStudent.id)}
+                                                                    className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] transition active:scale-95 border-none cursor-pointer"
+                                                                >
+                                                                    Simpan
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setEditingRecordId(null)}
+                                                                    className="h-8 px-2.5 rounded-lg bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 font-semibold text-[10px] transition active:scale-95 border-none cursor-pointer"
+                                                                >
+                                                                    Batal
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                                                                Alasan: <span className="font-semibold text-slate-900 dark:text-slate-200">{record.reason || "Tanpa alasan"}</span>
+                                                            </p>
+                                                        )}
                                                     </div>
-                                                    <button
-                                                        onClick={() => handleDeleteTardiness(record.id, selectedStudent.id)}
-                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 dark:hover:bg-red-500/20 rounded-lg transition shrink-0 cursor-pointer border border-transparent hover:border-red-500/10 outline-none active:scale-95"
-                                                        title="Hapus Rekap Ini"
-                                                    >
-                                                        <Trash2 className="h-4.5 w-4.5" />
-                                                    </button>
+                                                    <div className="flex gap-1 shrink-0">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingRecordId(record.id)
+                                                                setEditingRecordReason(record.reason || "")
+                                                            }}
+                                                            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 dark:hover:bg-blue-500/20 rounded-lg transition shrink-0 cursor-pointer border border-transparent hover:border-blue-500/10 outline-none active:scale-95"
+                                                            title="Ubah Alasan"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteTardiness(record.id, selectedStudent.id)}
+                                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 dark:hover:bg-red-500/20 rounded-lg transition shrink-0 cursor-pointer border border-transparent hover:border-red-500/10 outline-none active:scale-95"
+                                                            title="Hapus Rekap Ini"
+                                                        >
+                                                            <Trash2 className="h-4.5 w-4.5" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )

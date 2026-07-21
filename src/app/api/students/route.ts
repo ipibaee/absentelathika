@@ -3,10 +3,6 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 
 export async function GET() {
-    const session = await auth()
-    if (!session) {
-        return new NextResponse("Unauthorized", { status: 401 })
-    }
 
     try {
         const students = await prisma.student.findMany({

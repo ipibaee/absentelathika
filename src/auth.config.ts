@@ -8,10 +8,9 @@ export const authConfig = {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user
             const isOnDashboard = nextUrl.pathname.startsWith("/dashboard")
-            const isOnRecord = nextUrl.pathname.startsWith("/record")
 
             // Require login for authenticated routes
-            if (isOnDashboard || isOnRecord) {
+            if (isOnDashboard) {
                 if (isLoggedIn) return true
                 return false // Redirect to login
             }
