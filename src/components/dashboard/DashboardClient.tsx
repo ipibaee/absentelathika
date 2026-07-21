@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef, useMemo } from "react"
+import { useState, useRef, useMemo, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import * as XLSX from "xlsx"
 import { toast } from "sonner"
@@ -61,6 +62,11 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [editingStudent, setEditingStudent] = useState<StudentWithTardies | null>(null)
     const [deletingStudent, setDeletingStudent] = useState<StudentWithTardies | null>(null)
+
+    const [isMounted, setIsMounted] = useState(false)
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
     
     // Form Inputs States
     const [formNis, setFormNis] = useState("")
@@ -515,19 +521,19 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
             </div>
 
             {/* iOS Bottom Sheet: Late Records Details */}
-            {selectedStudent && (
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-50 animate-fade-in flex items-end md:items-center justify-center p-0 md:p-4">
+            {selectedStudent && isMounted && createPortal(
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-[100] animate-fade-in flex items-end md:items-center justify-center p-0 md:p-4">
                     {/* Backdrop Click Close */}
                     <div className="absolute inset-0" onClick={() => setSelectedStudent(null)} />
 
                     {/* Sheet Content Card */}
-                    <div className="relative w-full md:max-w-lg bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border-t md:border border-white/20 dark:border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl p-6 pb-10 md:pb-6 z-10 animate-slide-up md:animate-scale-up flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+                    <div className="relative w-full md:max-w-lg bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border-t md:border border-slate-200/50 dark:border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl p-5 md:p-6 z-10 animate-slide-up md:animate-scale-up flex flex-col max-h-[85vh] md:max-h-[80vh] overflow-hidden">
                         
                         {/* Mobile handle indicator */}
                         <div className="md:hidden w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-2 shrink-0" />
 
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between shrink-0 mb-3">
                             <div>
                                 <span className="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-widest block">
                                     Riwayat Keterlambatan
@@ -541,22 +547,22 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
                             </div>
                             <button
                                 onClick={() => setSelectedStudent(null)}
-                                className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition cursor-pointer"
+                                className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition cursor-pointer border-none outline-none"
                             >
                                 <X className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
 
-                        {/* Timeline List of Tardies */}
-                        <div className="flex flex-col gap-3 mt-2">
+                        {/* Timeline List of Tardies (Scrollable intermediate body) */}
+                        <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3.5 mt-2 scrollbar-thin">
                             {selectedStudent.tardies.length === 0 ? (
                                 <div className="p-8 rounded-2xl bg-green-500/10 border border-green-500/20 text-center flex flex-col items-center justify-center gap-2">
                                     <CheckCircle2 className="h-6 w-6 text-green-500" />
-                                    <h4 className="font-bold text-green-800 dark:text-green-300 text-xs">Siswa Sangat Rajin</h4>
+                                    <h4 className="font-bold text-green-800 dark:text-green-300 text-xs">Siswa Sangain Rajin</h4>
                                     <p className="text-[10px] text-green-600 dark:text-green-400">Belum ada rekap keterlambatan tercatat untuk siswa ini.</p>
                                 </div>
                             ) : (
-                                <div className="flex flex-col gap-3.5 max-h-[40vh] overflow-y-auto pr-1">
+                                <div className="flex flex-col gap-3.5 pr-1">
                                     {selectedStudent.tardies.map((record, index) => {
                                         const dateObj = new Date(record.date)
                                         const formattedDate = dateObj.toLocaleDateString("id-ID", {
@@ -581,9 +587,9 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
                                                         <div className="w-[1.5px] h-12 bg-slate-200 dark:bg-white/10 mt-1" />
                                                     )}
                                                 </div>
-
+ 
                                                 {/* Record Detail Box */}
-                                                <div className="flex-1 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-xs flex justify-between items-start gap-4">
+                                                <div className="flex-1 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-xs flex justify-between items-start gap-4">
                                                     <div className="flex-1">
                                                         <div className="flex items-center justify-between font-bold text-slate-800 dark:text-slate-200 mb-1">
                                                             <span>{formattedDate}</span>
@@ -610,102 +616,109 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
                             )}
                         </div>
 
-                        {/* Modal Action Close */}
-                        <div className="mt-4">
+                        {/* Modal Action Close (Sticky) */}
+                        <div className="mt-4 shrink-0 pt-3 border-t border-slate-200/50 dark:border-white/5">
                             <button
                                 onClick={() => setSelectedStudent(null)}
-                                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl shadow-sm active:scale-98 transition cursor-pointer"
+                                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl shadow-sm active:scale-98 transition cursor-pointer border-none outline-none"
                             >
                                 Selesai
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Tambah Siswa Manual Modal */}
-            {isAddModalOpen && (
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-50 animate-fade-in flex items-end md:items-center justify-center p-0 md:p-4">
+            {isAddModalOpen && isMounted && createPortal(
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-[100] animate-fade-in flex items-end md:items-center justify-center p-0 md:p-4">
                     <div className="absolute inset-0" onClick={() => { setIsAddModalOpen(false); resetForm(); }} />
-                    <div className="relative w-full md:max-w-md bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border-t md:border border-slate-200/50 dark:border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl p-6 pb-10 md:pb-6 z-10 animate-slide-up md:animate-scale-up flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
+                    <div className="relative w-full md:max-w-md bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border-t md:border border-slate-200/50 dark:border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl p-5 md:p-6 z-10 animate-slide-up md:animate-scale-up flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden">
+                        <div className="flex items-center justify-between shrink-0 mb-3">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Tambah Siswa Manual</h3>
-                            <button onClick={() => { setIsAddModalOpen(false); resetForm(); }} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition">
+                            <button onClick={() => { setIsAddModalOpen(false); resetForm(); }} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition border-none outline-none">
                                 <X className="h-5 w-5 text-slate-500" />
                             </button>
                         </div>
-                        <form onSubmit={handleCreateStudent} className="flex flex-col gap-4">
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">NIS (Nomor Induk Siswa)</label>
-                                <input type="text" value={formNis} onChange={e => setFormNis(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm" placeholder="Contoh: 10243" />
+                        <form onSubmit={handleCreateStudent} className="flex-1 flex flex-col overflow-hidden">
+                            <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 pb-2 scrollbar-thin">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">NIS (Nomor Induk Siswa)</label>
+                                    <input type="text" value={formNis} onChange={e => setFormNis(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm text-slate-900 dark:text-white" placeholder="Contoh: 10243" />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Nama Lengkap</label>
+                                    <input type="text" value={formName} onChange={e => setFormName(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm text-slate-900 dark:text-white" placeholder="Contoh: Ahmad Fauzi" />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Kelas</label>
+                                    <input type="text" value={formKelas} onChange={e => setFormKelas(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm text-slate-900 dark:text-white" placeholder="Contoh: X PPLG 1" />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Jurusan (Opsional)</label>
+                                    <input type="text" value={formJurusan} onChange={e => setFormJurusan(e.target.value)} className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm text-slate-900 dark:text-white" placeholder="Contoh: PPLG" />
+                                </div>
+                                {formError && (
+                                    <p className="text-xs font-bold text-red-500 text-center">{formError}</p>
+                                )}
                             </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Nama Lengkap</label>
-                                <input type="text" value={formName} onChange={e => setFormName(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm" placeholder="Contoh: Ahmad Fauzi" />
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Kelas</label>
-                                <input type="text" value={formKelas} onChange={e => setFormKelas(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm" placeholder="Contoh: X PPLG 1" />
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Jurusan (Opsional)</label>
-                                <input type="text" value={formJurusan} onChange={e => setFormJurusan(e.target.value)} className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm" placeholder="Contoh: PPLG" />
-                            </div>
-                            {formError && (
-                                <p className="text-xs font-bold text-red-500 text-center">{formError}</p>
-                            )}
-                            <div className="flex gap-3 mt-2">
-                                <button type="button" onClick={() => { setIsAddModalOpen(false); resetForm(); }} className="flex-1 h-12 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold rounded-2xl transition">Batal</button>
-                                <button type="submit" className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition shadow-lg shadow-blue-500/10">Simpan</button>
+                            <div className="flex gap-3 mt-4 pt-3 border-t border-slate-200/50 dark:border-white/5 shrink-0">
+                                <button type="button" onClick={() => { setIsAddModalOpen(false); resetForm(); }} className="flex-1 h-11 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold rounded-2xl transition border-none outline-none">Batal</button>
+                                <button type="submit" className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition shadow-lg shadow-blue-500/10 border-none outline-none">Simpan</button>
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Edit Siswa Modal */}
-            {editingStudent && (
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-50 animate-fade-in flex items-end md:items-center justify-center p-0 md:p-4">
+            {editingStudent && isMounted && createPortal(
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-[100] animate-fade-in flex items-end md:items-center justify-center p-0 md:p-4">
                     <div className="absolute inset-0" onClick={() => { setEditingStudent(null); resetForm(); }} />
-                    <div className="relative w-full md:max-w-md bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border-t md:border border-slate-200/50 dark:border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl p-6 pb-10 md:pb-6 z-10 animate-slide-up md:animate-scale-up flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
+                    <div className="relative w-full md:max-w-md bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border-t md:border border-slate-200/50 dark:border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl p-5 md:p-6 z-10 animate-slide-up md:animate-scale-up flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden">
+                        <div className="flex items-center justify-between shrink-0 mb-3">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Ubah Data Siswa</h3>
-                            <button onClick={() => { setEditingStudent(null); resetForm(); }} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition">
+                            <button onClick={() => { setEditingStudent(null); resetForm(); }} className="h-9 w-9 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition border-none outline-none">
                                 <X className="h-5 w-5 text-slate-500" />
                             </button>
                         </div>
-                        <form onSubmit={handleUpdateStudent} className="flex flex-col gap-4">
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">NIS (Nomor Induk Siswa)</label>
-                                <input type="text" value={formNis} onChange={e => setFormNis(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm" />
+                        <form onSubmit={handleUpdateStudent} className="flex-1 flex flex-col overflow-hidden">
+                            <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 pb-2 scrollbar-thin">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">NIS (Nomor Induk Siswa)</label>
+                                    <input type="text" value={formNis} onChange={e => setFormNis(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm text-slate-900 dark:text-white" />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Nama Lengkap</label>
+                                    <input type="text" value={formName} onChange={e => setFormName(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm text-slate-900 dark:text-white" />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Kelas</label>
+                                    <input type="text" value={formKelas} onChange={e => setFormKelas(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm text-slate-900 dark:text-white" />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Jurusan (Opsional)</label>
+                                    <input type="text" value={formJurusan} onChange={e => setFormJurusan(e.target.value)} className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm text-slate-900 dark:text-white" />
+                                </div>
+                                {formError && (
+                                    <p className="text-xs font-bold text-red-500 text-center">{formError}</p>
+                                )}
                             </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Nama Lengkap</label>
-                                <input type="text" value={formName} onChange={e => setFormName(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm" />
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Kelas</label>
-                                <input type="text" value={formKelas} onChange={e => setFormKelas(e.target.value)} required className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm" />
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Jurusan (Opsional)</label>
-                                <input type="text" value={formJurusan} onChange={e => setFormJurusan(e.target.value)} className="w-full h-11 px-4 bg-slate-100 dark:bg-black/20 border border-slate-200/50 dark:border-white/5 rounded-xl outline-none focus:ring-1 focus:ring-blue-500/30 text-sm" />
-                            </div>
-                            {formError && (
-                                <p className="text-xs font-bold text-red-500 text-center">{formError}</p>
-                            )}
-                            <div className="flex gap-3 mt-2">
-                                <button type="button" onClick={() => { setEditingStudent(null); resetForm(); }} className="flex-1 h-12 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold rounded-2xl transition">Batal</button>
-                                <button type="submit" className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition shadow-lg shadow-blue-500/10">Simpan Perubahan</button>
+                            <div className="flex gap-3 mt-4 pt-3 border-t border-slate-200/50 dark:border-white/5 shrink-0">
+                                <button type="button" onClick={() => { setEditingStudent(null); resetForm(); }} className="flex-1 h-11 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold rounded-2xl transition border-none outline-none">Batal</button>
+                                <button type="submit" className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition shadow-lg shadow-blue-500/10 border-none outline-none">Simpan Perubahan</button>
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Hapus Siswa Confirmation Dialog */}
-            {deletingStudent && (
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-50 animate-fade-in flex items-center justify-center p-4">
+            {deletingStudent && isMounted && createPortal(
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-xs z-[100] animate-fade-in flex items-center justify-center p-4">
                     <div className="absolute inset-0" onClick={() => setDeletingStudent(null)} />
                     <div className="relative w-full max-w-sm bg-white/95 dark:bg-[#0c1224]/95 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 rounded-3xl shadow-2xl p-6 z-10 animate-scale-up flex flex-col gap-4 text-center">
                         <div className="mx-auto h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-600 mb-2 border border-red-500/10">
@@ -718,11 +731,12 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
                             </p>
                         </div>
                         <div className="flex gap-3 mt-2">
-                            <button type="button" onClick={() => setDeletingStudent(null)} className="flex-1 h-11 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition">Batal</button>
-                            <button type="button" onClick={handleDeleteStudent} className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition shadow-md shadow-red-500/10">Hapus</button>
+                            <button type="button" onClick={() => setDeletingStudent(null)} className="flex-1 h-11 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition border-none outline-none">Batal</button>
+                            <button type="button" onClick={handleDeleteStudent} className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition shadow-md shadow-red-500/10 border-none outline-none">Hapus</button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     )
