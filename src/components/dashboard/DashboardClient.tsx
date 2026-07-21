@@ -605,7 +605,8 @@ export function DashboardClient({ students: initialStudents, stats }: DashboardC
                                         })
                                         const formattedTime = dateObj.toLocaleTimeString("id-ID", {
                                             hour: "2-digit",
-                                            minute: "2-digit"
+                                            minute: "2-digit",
+                                            second: "2-digit"
                                         })
                                         return (
                                             <div 

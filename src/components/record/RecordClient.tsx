@@ -387,7 +387,8 @@ export function RecordClient({ initialStudents, stats: initialStats, currentUser
                                                     })
                                                     const formattedTime = dateObj.toLocaleTimeString("id-ID", {
                                                         hour: "2-digit",
-                                                        minute: "2-digit"
+                                                        minute: "2-digit",
+                                                        second: "2-digit"
                                                     })
                                                     return (
                                                         <div key={record.id} className="flex gap-3 items-start relative pl-1 text-[11px]">
